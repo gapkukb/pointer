@@ -1,0 +1,32 @@
+{
+  "name": "pointer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "index.d.ts",
+  "dependencies": {
+    "lodash-decorators": "^6.0.1"
+  },
+  "devDependencies": {
+    "webpack": "^5.0.0-rc.5",
+    "ts-loader": "^8.0.4",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3",
+    "webpack-cli": "^3.3.12"
+  },
+  "scripts": {
+    "dev": "webpack -w",
+    "build": "webpack --env.build=true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gapkukb/pointer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gapkukb/pointer/issues"
+  },
+  "homepage": "https://github.com/gapkukb/pointer#readme"
+}

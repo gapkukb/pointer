@@ -4,14 +4,74 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no" />
     <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #div {
+        width: 100%;
+        overflow: hidden;
+        touch-action: pan-y;
+        overflow: hidden;
+      }
+      .slide {
+        display: flex;
+        flex-wrap: nowrap;
+        width: 100%;
+        transition: transform 5000ms ease-out;
+        transform: translate3d(0, 0, 0);
+      }
+      .item {
+        flex: 0 0 100%;
+        height: 200px;
+      }
+    </style>
   </head>
-  <body style="touch-action: none">
-    <div id="div" style="width: 300px; height: 300px; background-color: red"></div>
+  <body>
+    <div id="div">
+      <div class="slide">
+        <div class="item" style="background-color: yellow"></div>
+        <div class="item" style="background-color: red"></div>
+        <div class="item" style="background-color: blue"></div>
+      </div>
+      <div style="height: 1000px"></div>
+    </div>
 
-    <script src="./touch-emulator.js"></script>
+    <script src="./require.min.js"></script>
     <script>
-      TouchEmulator();
+      requirejs(["index"], function (module) {
+        // var slider = document.querySelector("#div .slide");
+        // var i = 0;
+        // var interaction = new module.Pointer("#div", {
+        //   slider: null,
+        //   init() {
+        //     slider.addEventListener("pointerdown", (e) => console.log(e));
+        //     var t;
+        //     slider.addEventListener("pointermove", (e) => {
+        //       if (t) return;
+        //       t = setTimeout(() => {
+        //         console.log(e);
+        //         t = null;
+        //       }, 500);
+        //     });
+        //   },
+        //   begin() {
+        //     slider.style.transitionDuration = "0ms";
+        //     slider.style.transform = window.getComputedStyle(slider).getPropertyValue("transform");
+        //   },
+        //   pan(e) {
+        //     slider.style.transform = `translate3d(${i + e.dx}px,0,0)`;
+        //   },
+        //   end(e) {
+        //     slider.style.transitionDuration = "";
+        //     slider.style.transform = `translate3d(0,0,0)`;
+        //   },
+        // });
+        // interaction.destroy();
+        // interaction = null;
+        // console.log(interaction);
+      });
     </script>
-    <script src="./index.js"></script>
   </body>
 </html>

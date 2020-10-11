@@ -4,7 +4,7 @@ define("helper", ["require", "exports"], function (require, exports) {
     exports.greater = exports.noop = exports.pickup = exports.throttle = exports.getRotateAngle = exports.getLen = exports.getDir = exports.disXy = exports.point = exports.getPoint = void 0;
     function getPoint(e, i) {
         if (i === void 0) { i = 0; }
-        var _a = e.changedTouches[i], x = _a.pageX, y = _a.pageY;
+        var _a = e.touches[i], x = _a.pageX, y = _a.pageY;
         return { x: x, y: y, time: Date.now() };
     }
     exports.getPoint = getPoint;
@@ -105,7 +105,6 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
             .split(" ")
             .find(function (ii) { return "on" + ii in window; }) || "";
     });
-    console.log(emap);
     window.setImmediate =
         window.setImmediate ||
             function (f) {
@@ -120,7 +119,8 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
         function Pointer(el, options) {
             if (options === void 0) { options = {}; }
             this.init = helper_1.noop;
-            this.throttle = 50;
+            this.prevent = false;
+            this.throttle = 1000 / 30; //30帧
             this.singleTime = 250;
             this.dbtapTime = 250;
             this.pressTime = 700;
@@ -167,7 +167,8 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
             //合并传入参数属性
             Object.assign(this, props);
             this.$begin = this.$begin.bind(this);
-            this.$move = helper_1.throttle(this.$move.bind(this), this.throttle);
+            this.$move = this.$move.bind(this);
+            this._move = helper_1.throttle(this._move, this.throttle);
             this.$end = this.$end.bind(this);
             this.$out = this.$out.bind(this);
             this.abortAll = this.abortAll.bind(this);
@@ -194,7 +195,7 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
                 //如果两次点击时间和距离都在阈值内，判定为双击同时取消触发单机
                 this.isDbtap = delta > 0 && delta <= this.dbtapTime && !helper_1.greater(this.bp1, this.prePoint, this.maxXy);
                 if (this.isDbtap)
-                    clearTimeout(this.singleTimer);
+                    this.abortSingle();
             }
             //将上次坐标点更新为当前
             this.prePoint = this.bp1;
@@ -214,14 +215,20 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
             }, this.pressTime);
         };
         Pointer.prototype.$move = function (e) {
+            if (this.prevent)
+                e.preventDefault();
+            else if (e.touches && e.touches.length > 1)
+                e.preventDefault();
             if (!this.started)
                 return;
+            this._move(e);
+        };
+        Pointer.prototype._move = function (e) {
             this.e = e;
             this.isDbtap = false; // 如果有移动就取消双击事件
             // 第一个触摸点
             var p1 = helper_1.getPoint(e), _a = this.mp1, x = _a.x, y = _a.y;
             if (e.touches.length > 1) {
-                e.preventDefault();
                 //第二个触摸点
                 var p2 = helper_1.getPoint(e, 1), 
                 //两者xy距离
@@ -309,7 +316,7 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
             this.emit("abort");
         };
         Pointer.prototype.$on = function (n, handler) {
-            this.el.addEventListener(emap[n], handler, false);
+            this.el.addEventListener(emap[n], handler, emap[n].indexOf("touch") !== -1 ? { passive: false } : false);
             return this;
         };
         Pointer.prototype.$off = function (n, handler) {
@@ -329,8 +336,8 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
         };
         Pointer.prototype.abortAll = function () {
             this.preventTap = true;
-            clearTimeout(this.singleTimer);
-            clearTimeout(this.pressTimer);
+            this.abortSingle();
+            this.abortPress();
             clearImmediate(this.tapTimer);
             clearImmediate(this.swipeTimer);
         };
@@ -362,6 +369,7 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
     exports.Pointer = Pointer;
     new Pointer(document.body, {
         swipeleft: function (e) {
+            this.abc;
             console.log(e);
         },
         swiperight: function (e) {
@@ -376,6 +384,9 @@ define("index", ["require", "exports", "helper"], function (require, exports, he
         dbtap: function (e) {
             console.log("dbtap");
         },
+        move: function (e) { },
+    }).on("tap", function (e) {
+        this.abc;
     });
 });
 //# sourceMappingURL=index.js.map

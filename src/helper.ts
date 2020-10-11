@@ -11,54 +11,54 @@ export interface Point {
   y: number;
   time: number;
 }
-export type Hook = (this: Pointer, e: PointerEventLike) => void;
-export interface PointerEventMap {
+export type Hook<T> = (this: Pointer & T, e: PointerEventLike) => void;
+export interface PointerEventMap<T> {
   //单指交互事件
   /** 按下 */
-  begin: Hook;
+  begin: Hook<T>;
   /** 按下并移动 */
-  move: Hook;
+  move: Hook<T>;
   /** 抬起 */
-  end: Hook;
+  end: Hook<T>;
   /** 取消，打断 */
-  abort: Hook;
+  abort: Hook<T>;
   /** 单指轻击 */
-  tap: Hook;
-  /** 单指轻击 */
-  singletap: Hook;
+  tap: Hook<T>;
+  /** 单指轻击,在tap之后一段时间触发 */
+  singletap: Hook<T>;
   /** 单指双击 */
-  dbtap: Hook;
+  dbtap: Hook<T>;
   /** 单指长按 */
-  press: Hook;
+  press: Hook<T>;
   /** 单指拖动(在手指鼠标按压并移动时触发) */
-  pan: Hook;
+  pan: Hook<T>;
   /** 单指滑动(在手指鼠标抬起时触发) */
-  swipe: Hook;
+  swipe: Hook<T>;
   /** 单指向左滑动(在手指鼠标抬起时触发) */
-  swipeleft: Hook;
+  swipeleft: Hook<T>;
   /** 单指向右滑动(在手指鼠标抬起时触发) */
-  swiperight: Hook;
+  swiperight: Hook<T>;
   /** 单指向下滑动(在手指鼠标抬起时触发) */
-  swipedown: Hook;
+  swipedown: Hook<T>;
   /** 单指向上滑动(在手指鼠标抬起时触发) */
-  swipeup: Hook;
+  swipeup: Hook<T>;
   //多指交互事件
   /** 双指旋转时触发 */
-  rotate: Hook;
+  rotate: Hook<T>;
   /** 双指捏合捏放时触发 */
-  pinch: Hook;
-  /** 双指捏合(缩小)时触发 */
-  pinchin: Hook;
+  pinch: Hook<T>;
+  /** 双指捏合(缩小)且手指鼠标抬起时触发 */
+  pinchin: Hook<T>;
   /** 双指捏放(放大)且手指鼠标抬起时触发 */
-  pinchout: Hook;
+  pinchout: Hook<T>;
   /** 双指按下 */
-  multibegin: Hook;
+  multibegin: Hook<T>;
   /** 双指抬起 */
-  multiend: Hook;
+  multiend: Hook<T>;
   /** 双指轻击时触发 */
-  multitap: Hook;
+  multitap: Hook<T>;
   /** 双指拖动时触发 */
-  multipan: Hook;
+  multipan: Hook<T>;
 }
 
 export interface PointerOptions {
@@ -72,10 +72,9 @@ export interface PointerOptions {
   pressTime: number;
   /** 初始化 */
   init: (this: Pointer) => void;
-  [key: string]: any;
 }
 export function getPoint(e: TouchEvent, i: number = 0): Point {
-  const { pageX: x, pageY: y } = e.changedTouches[i];
+  const { pageX: x, pageY: y } = e.touches[i];
   return { x, y, time: Date.now() };
 }
 export function point(x: number, y: number): Point {

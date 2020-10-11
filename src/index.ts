@@ -7,10 +7,9 @@ import {
   getPoint,
   PointerEventLike,
   PointerEventMap,
-  Hook,
   CombineEvent,
+  Hook,
   getLen,
-  point,
   disXy,
   getRotateAngle,
   getDir,
@@ -28,8 +27,7 @@ const emap = [
       .split(" ")
       .find((ii) => `on${ii}` in window) || ""
 );
-console.log(emap);
-
+type EventMap = keyof PointerEventMap<never>;
 window.setImmediate =
   window.setImmediate ||
   function (f: Function) {
@@ -40,14 +38,15 @@ window.clearImmediate =
   function (n: number) {
     return window.clearTimeout(n);
   };
-export class Pointer {
-  constructor(el: HTMLElement | string, options: Partial<PointerOptions & PointerEventMap> = {}) {
+export class Pointer<T = {}> {
+  constructor(el: HTMLElement | string, options: Partial<T & PointerOptions & PointerEventMap<T>> = {}) {
     this.el = typeof el === "string" ? (document.querySelector(el) as HTMLElement) : el;
     const [props, methods] = pickup(options);
     //合并传入参数属性
     Object.assign(this, props);
     this.$begin = this.$begin.bind(this);
-    this.$move = throttle(this.$move.bind(this), this.throttle);
+    this.$move = this.$move.bind(this);
+    this._move = throttle(this._move, this.throttle);
     this.$end = this.$end.bind(this);
     this.$out = this.$out.bind(this);
     this.abortAll = this.abortAll.bind(this);
@@ -62,7 +61,8 @@ export class Pointer {
   }
   el!: HTMLElement;
   private init = noop;
-  private throttle = 50;
+  private prevent = false;
+  private throttle = 1000 / 30; //30帧
   private singleTime = 250;
   private dbtapTime = 250;
   private pressTime = 700;
@@ -120,7 +120,7 @@ export class Pointer {
     if (delta > 0) {
       //如果两次点击时间和距离都在阈值内，判定为双击同时取消触发单机
       this.isDbtap = delta > 0 && delta <= this.dbtapTime && !greater(this.bp1, this.prePoint, this.maxXy);
-      if (this.isDbtap) clearTimeout(this.singleTimer);
+      if (this.isDbtap) this.abortSingle();
     }
     //将上次坐标点更新为当前
     this.prePoint = this.bp1;
@@ -141,14 +141,18 @@ export class Pointer {
     }, this.pressTime);
   }
   private $move(e: PointerEventLike) {
+    if (this.prevent) e.preventDefault();
+    else if (e.touches && e.touches.length > 1) e.preventDefault();
     if (!this.started) return;
+    this._move(e);
+  }
+  private _move(e: PointerEventLike) {
     this.e = e;
     this.isDbtap = false; // 如果有移动就取消双击事件
     // 第一个触摸点
     let p1 = getPoint(e),
       { x, y } = this.mp1;
     if (e.touches.length > 1) {
-      e.preventDefault();
       //第二个触摸点
       let p2 = getPoint(e, 1),
         //两者xy距离
@@ -232,14 +236,14 @@ export class Pointer {
     this.emit("abort");
   }
   private $on(n: number, handler: any) {
-    this.el.addEventListener(emap[n], handler, false);
+    this.el.addEventListener(emap[n], handler, emap[n].indexOf("touch") !== -1 ? { passive: false } : false);
     return this;
   }
   private $off(n: number, handler: any) {
     this.el.removeEventListener(emap[n], handler);
     return this;
   }
-  private emit(e: keyof PointerEventMap) {
+  private emit(e: EventMap) {
     let handlers = this.handlers[e] || [];
     handlers.forEach((f) => f.call(this, this.e));
   }
@@ -251,17 +255,17 @@ export class Pointer {
   }
   private abortAll() {
     this.preventTap = true;
-    clearTimeout(this.singleTimer);
-    clearTimeout(this.pressTimer);
+    this.abortSingle();
+    this.abortPress();
     clearImmediate(this.tapTimer);
     clearImmediate(this.swipeTimer);
   }
 
-  on(e: keyof PointerEventMap, handler: Hook) {
+  on(e: EventMap, handler: Hook<T>) {
     (this.handlers[e] = this.handlers[e] || []).push(handler);
     return this;
   }
-  off(e: keyof PointerEventMap, handler?: Hook) {
+  off(e: EventMap, handler?: any) {
     let handlers = this.handlers[e] || [],
       i = handlers.length;
     if (handler) while (i--) handlers[i] === handler && handlers.splice(i, 1);
@@ -280,8 +284,9 @@ export class Pointer {
   }
 }
 
-new Pointer(document.body, {
+new Pointer<{ abc: string }>(document.body, {
   swipeleft(e) {
+    this.abc;
     console.log(e);
   },
   swiperight(e) {
@@ -296,4 +301,7 @@ new Pointer(document.body, {
   dbtap(e) {
     console.log("dbtap");
   },
+  move(e) {},
+}).on("tap", function (e) {
+  this.abc;
 });

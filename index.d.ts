@@ -11,52 +11,52 @@ declare module "helper" {
         y: number;
         time: number;
     }
-    export type Hook = (this: Pointer, e: PointerEventLike) => void;
-    export interface PointerEventMap {
+    export type Hook<T> = (this: Pointer & T, e: PointerEventLike) => void;
+    export interface PointerEventMap<T> {
         /** 按下 */
-        begin: Hook;
+        begin: Hook<T>;
         /** 按下并移动 */
-        move: Hook;
+        move: Hook<T>;
         /** 抬起 */
-        end: Hook;
+        end: Hook<T>;
         /** 取消，打断 */
-        abort: Hook;
+        abort: Hook<T>;
         /** 单指轻击 */
-        tap: Hook;
-        /** 单指轻击 */
-        singletap: Hook;
+        tap: Hook<T>;
+        /** 单指轻击,在tap之后一段时间触发 */
+        singletap: Hook<T>;
         /** 单指双击 */
-        dbtap: Hook;
+        dbtap: Hook<T>;
         /** 单指长按 */
-        press: Hook;
+        press: Hook<T>;
         /** 单指拖动(在手指鼠标按压并移动时触发) */
-        pan: Hook;
+        pan: Hook<T>;
         /** 单指滑动(在手指鼠标抬起时触发) */
-        swipe: Hook;
+        swipe: Hook<T>;
         /** 单指向左滑动(在手指鼠标抬起时触发) */
-        swipeleft: Hook;
+        swipeleft: Hook<T>;
         /** 单指向右滑动(在手指鼠标抬起时触发) */
-        swiperight: Hook;
+        swiperight: Hook<T>;
         /** 单指向下滑动(在手指鼠标抬起时触发) */
-        swipedown: Hook;
+        swipedown: Hook<T>;
         /** 单指向上滑动(在手指鼠标抬起时触发) */
-        swipeup: Hook;
+        swipeup: Hook<T>;
         /** 双指旋转时触发 */
-        rotate: Hook;
+        rotate: Hook<T>;
         /** 双指捏合捏放时触发 */
-        pinch: Hook;
-        /** 双指捏合(缩小)时触发 */
-        pinchin: Hook;
+        pinch: Hook<T>;
+        /** 双指捏合(缩小)且手指鼠标抬起时触发 */
+        pinchin: Hook<T>;
         /** 双指捏放(放大)且手指鼠标抬起时触发 */
-        pinchout: Hook;
+        pinchout: Hook<T>;
         /** 双指按下 */
-        multibegin: Hook;
+        multibegin: Hook<T>;
         /** 双指抬起 */
-        multiend: Hook;
+        multiend: Hook<T>;
         /** 双指轻击时触发 */
-        multitap: Hook;
+        multitap: Hook<T>;
         /** 双指拖动时触发 */
-        multipan: Hook;
+        multipan: Hook<T>;
     }
     export interface PointerOptions {
         /** touchmove/mousemove函数节流时间 */
@@ -69,7 +69,6 @@ declare module "helper" {
         pressTime: number;
         /** 初始化 */
         init: (this: Pointer) => void;
-        [key: string]: any;
     }
     export function getPoint(e: TouchEvent, i?: number): Point;
     export function point(x: number, y: number): Point;
@@ -92,10 +91,12 @@ declare module "helper" {
 }
 declare module "index" {
     import { PointerOptions, PointerEventMap, Hook } from "helper";
-    export class Pointer {
-        constructor(el: HTMLElement | string, options?: Partial<PointerOptions & PointerEventMap>);
+    type EventMap = keyof PointerEventMap<never>;
+    export class Pointer<T = {}> {
+        constructor(el: HTMLElement | string, options?: Partial<T & PointerOptions & PointerEventMap<T>>);
         el: HTMLElement;
         private init;
+        private prevent;
         private throttle;
         private singleTime;
         private dbtapTime;
@@ -140,6 +141,7 @@ declare module "index" {
         private e;
         private $begin;
         private $move;
+        private _move;
         private $end;
         private $out;
         private $on;
@@ -148,8 +150,8 @@ declare module "index" {
         private abortPress;
         private abortSingle;
         private abortAll;
-        on(e: keyof PointerEventMap, handler: Hook): this;
-        off(e: keyof PointerEventMap, handler?: Hook): this;
+        on(e: EventMap, handler: Hook<T>): this;
+        off(e: EventMap, handler?: any): this;
         destroy(): null;
     }
 }
